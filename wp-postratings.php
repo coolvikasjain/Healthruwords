@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: WP-PostRatings
+Plugin Name: HealThruWords Ratings
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds an AJAX rating system for your WordPress blog's post/page.
-Version: 1.81
+Version: 99.00
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-postratings
@@ -36,8 +36,8 @@ define( 'WP_POSTRATINGS_VERSION', 1.81 );
 
 ### Define Image Extension
 if( ! defined( 'RATINGS_IMG_EXT' ) ) {
-	define( 'RATINGS_IMG_EXT', 'gif' );
-	//define( 'RATINGS_IMG_EXT', 'png' );
+	//define( 'RATINGS_IMG_EXT', 'gif' );
+	define( 'RATINGS_IMG_EXT', 'png' );
 }
 
 ### Create Text Domain For Translations
@@ -198,7 +198,9 @@ function the_ratings_results($post_id, $new_user = 0, $new_score = 0, $new_avera
 		$post_ratings_data->ratings_users = $new_user;
 		$post_ratings_data->ratings_score = $new_score;
 		$post_ratings_data->ratings_average = $new_average;
+		
 	}
+	//var_dump($post_ratings_data);
 	// Display The Contents
 	if($type == 1) {
 		$template_postratings_text = stripslashes(get_option('postratings_template_permission'));
@@ -265,6 +267,7 @@ function check_allowtorate() {
 ### Function: Check Whether User Have Rated For The Post
 function check_rated( $post_id ) {
 	$postratings_logging_method = intval( get_option( 'postratings_logging_method' ) );
+	
 	$rated = false;
 	switch( $postratings_logging_method ) {
 		// Do Not Log
@@ -281,11 +284,28 @@ function check_rated( $post_id ) {
 			break;
 		// Logged By Cookie And IP
 		case 3:
-			$rated_cookie = check_rated_cookie( $post_id );
-			if( $rated_cookie > 0 ) {
-				$rated = true;
-			} else {
-				$rated = check_rated_ip( $post_id );
+			if(!is_user_logged_in())
+			{
+				$rated_cookie = check_rated_cookie( $post_id );
+				
+				if( $rated_cookie > 0 ) {
+					$rated = true;
+				} else {
+					$rated = check_rated_ip( $post_id );
+				}
+			}
+			else
+			{
+				global $current_user;
+				
+				$user_ID = $current_user->data->ID;
+				global $wpdb;
+				$sql="SELECT rating_rating FROM {$wpdb->ratings} WHERE rating_postid = ".$post_id." AND rating_userid = ".$user_ID;
+				$res=$wpdb->get_results($sql);
+				if(!empty($res))
+					$rated=1;
+				else
+					$rated=0;
 			}
 			break;
 		// Logged By Username
@@ -1152,7 +1172,7 @@ function expand_ratings_template($template, $post_data, $post_ratings_data = nul
 	} else {
 		$post_id = $post_data;
 	}
-
+	
 	// Most likely from coming from Widget
 	if(isset($post_data->ratings_users)) {
 		$post_ratings_users = intval($post_data->ratings_users);
@@ -1174,7 +1194,9 @@ function expand_ratings_template($template, $post_data, $post_ratings_data = nul
 		$post_ratings_score = is_array($post_ratings_data) && array_key_exists('ratings_score', $post_ratings_data) ? intval($post_ratings_data['ratings_score'][0]) : 0;
 		$post_ratings_average = is_array($post_ratings_data) && array_key_exists('ratings_average', $post_ratings_data) ? floatval($post_ratings_data['ratings_average'][0]) : 0;
 	}
-
+	//var_dump($post_ratings_users);
+	//var_dump($post_ratings_score);
+	//var_dump($post_ratings_average);
 	if($post_ratings_score == 0 || $post_ratings_users == 0) {
 		$post_ratings = 0;
 		$post_ratings_average = 0;
@@ -1182,6 +1204,34 @@ function expand_ratings_template($template, $post_data, $post_ratings_data = nul
 	} else {
 		$post_ratings = round($post_ratings_average, 1);
 		$post_ratings_percentage = round((($post_ratings_score/$post_ratings_users)/$ratings_max) * 100, 2);
+	}
+	
+	if(!is_user_logged_in())
+	{
+		global $wpdb;
+		$post_ratings_users=$post_ratings_score=$post_ratings_average=$post_ratings=0;
+		$ip=get_ipaddress();
+		$res =$wpdb->get_results( "SELECT rating_rating FROM {$wpdb->ratings} WHERE rating_postid =".$post_id." AND rating_username='Guest' AND rating_ip = '".$ip."'");
+		//print_r($res);
+		if(!empty($res))
+			$post_ratings_users=$post_ratings_score=$post_ratings_average=$post_ratings=$res[0]->rating_rating;
+		else
+			$post_ratings_users=$post_ratings_score=$post_ratings_average=$post_ratings=0;
+	}
+	else
+	{
+		//$current_user = wp_get_current_user();
+		global $current_user;
+		
+		$user_ID = $current_user->data->ID; 
+		global $wpdb;
+		$sql="SELECT rating_rating FROM {$wpdb->ratings} WHERE rating_postid = ".$post_id." AND rating_userid = ".$user_ID;
+		//echo $sql;
+		$res=$wpdb->get_results($sql);
+		//print_r($res);
+		$post_ratings_users=$post_ratings_score=$post_ratings_average=$post_ratings=$res[0]->rating_rating;
+		//echo $res[0]->rating_rating;
+		
 	}
 	$post_ratings_text = '<span class="post-ratings-text" id="ratings_'.$post_id.'_text"></span>';
 	// Get the image's alt text
