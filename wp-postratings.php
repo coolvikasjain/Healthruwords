@@ -1036,7 +1036,7 @@ function get_ratings_images($ratings_custom, $ratings_max, $post_rating, $rating
 			}
 		}
 	} else {
-		
+		require_once(ABSPATH . 'wp-admin/includes/screen.php');
 		$screen = get_current_screen();
 		//print_r($screen);
 		if(is_admin() && ($screen->id=='edit-post' || $screen->id=='edit-page')){
