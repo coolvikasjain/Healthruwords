@@ -1,4 +1,4 @@
-/*
+
 Plugin Name: HealThruWords Ratings
 Plugin URI: http://lesterchan.net/portfolio/programming/php/
 Description: Adds an AJAX rating system for your WordPress blog's post/page.
@@ -6,8 +6,6 @@ Version: 99.00
 Author: Lester 'GaMerZ' Chan
 Author URI: http://lesterchan.net
 Text Domain: wp-postratings
-*/
-
  
 
 Adds an AJAX rating system for your WordPress blog's post/page.
@@ -22,9 +20,6 @@ Adds an AJAX rating system for your WordPress blog's post/page.
 
 = Version 1.00 (01-03-2006) =
 * NEW: Initial Release
-
-
-== Frequently Asked Questions ==
 
 = How To Change Schema Type? =
 * The default schema type is 'Article', if you want to change it to 'Recipe', you need to make use of the `wp_postratings_schema_itemtype` filter as shown in the sample code below:
